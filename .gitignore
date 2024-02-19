@@ -1,0 +1,11 @@
+*.pdb
+/build/
+*.ilk
+*.obj
+*.exe
+*.json
+*.log
+*.dll
+*.o
+/bin/
+/out/
