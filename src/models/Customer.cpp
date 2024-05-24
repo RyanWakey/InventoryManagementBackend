@@ -20,22 +20,23 @@ int Customer::createCustomer(const std::string& email, const std::string& hashed
     try {
         std::shared_ptr<sql::Connection> conn = DB_Manager::getConnection();
 
-        // Insert the new customer and retrieve the generated ID in one go
+        // Insert the new customer
         std::unique_ptr<sql::PreparedStatement> pstmt(conn->prepareStatement(
-            "INSERT INTO Customers (Email, PasswordHash) VALUES (?, ?); SELECT LAST_INSERT_ID() AS NewID;"
+            "INSERT INTO Customers (Email, PasswordHash) VALUES (?, ?)"
         ));
 
         pstmt->setString(1, email);
         pstmt->setString(2, hashedPassword);
+        pstmt->execute();
 
-        bool isResultSet = pstmt->execute();
-        if (isResultSet) {
-            std::unique_ptr<sql::ResultSet> res(pstmt->getResultSet());
-            // Move to the first row of the result set
-            if (res->next()) {
-                int newId = res->getInt("NewID");
-                return newId; // Return the new customer ID
-            }
+        // Retrieve the generated ID
+        std::unique_ptr<sql::Statement> stmt(conn->createStatement());
+        std::unique_ptr<sql::ResultSet> res(stmt->executeQuery("SELECT LAST_INSERT_ID() AS NewID"));
+
+        // Move to the first row of the result set
+        if (res->next()) {
+            int newId = res->getInt("NewID");
+            return newId; // Return the new customer ID
         }
     } catch (const sql::SQLException &e) {
         std::cerr << "SQL Error in createCustomer: " << e.what() << std::endl;
